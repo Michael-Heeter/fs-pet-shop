@@ -73,6 +73,14 @@ app.post('/pets', async (req,res) => {
     }
 })
 
+app.patch('/pets/:id', async (req,res) => {
+    try{
+
+    }catch (error){
+        res.status(500).send('Internal Server Error')
+    }
+})
+
 app.delete('/pets/:id', async (req,res) => {
     try{
         const index = parseInt(req.params.id)
