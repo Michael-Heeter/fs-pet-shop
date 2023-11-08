@@ -9,14 +9,28 @@ const app = express()
 const PORT = 4000
 
 
-
-app.use(express.json())
-
 const getPetsObj = async () => {
     const petData = await fs.readFile(petPath, 'utf8')
     return JSON.parse(petData)
 }
 
+// const savePetsObj = async (pets) => {
+//     try {
+//         const data = JSON.stringify(pets, null, 2)
+//         fs.writeFileSync('pets.json', data)
+//     } catch (error) {
+//         console.error(error)
+//         throw new Error('Error while saving pets data')
+//     }
+// }
+
+app.use((err,req,res,next) => {
+    if(err){
+        res.status(500).send('Internal Server Error')
+    }else{
+        next()
+    }
+})
 
 app.get('/pets', async (req,res) => {
     try{
@@ -27,56 +41,68 @@ app.get('/pets', async (req,res) => {
     }
 })
 
-app.get('/pets/:id', async (req,res) => {
-    try{
-        const pets = await getPetsObj()
-        aName = req.params.id
-        const index = parseInt(aName, 10)
-        console.log(index)
-        const result = pets.filter(obj => Object.values(obj).includes(aName, 10))
-        console.log(result)
-        if (isNaN(index)){
-            if (req.params.id === result){
-                return res.status(200).json(result)
-            }else{
-                console.log('err')
-                return res.status(400).send('Bad Request: Invalid pet index')
+app.get('/pets/:id', async (req, res) => {
+    try {
+        const pets = await getPetsObj();
+        const id = req.params.id;
+        const index = parseInt(id, 10);
+
+        if (isNaN(index)) {
+            const result = pets.find(pet => pet.name === id);
+            if (result) {
+                res.status(200).json(result);
+            } else {
+                res.status(404).send('Not Found');
+            }
+        } else {
+            if (index >= pets.length || index < 0) {
+                res.status(404).send('Not Found');
+            } else {
+                res.status(200).json(pets[index]);
             }
         }
-
-        if(index >= pets.length || index < 0){
-            res.status(404).send('Not Found')
-        }else{
-            res.status(200).json(pets[index])
-        }
-    }catch(error){
-        console.log(error)
-        console.log('end')
-        res.status(500).send('Internal Server Error')
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
     }
-})
+});
 
-app.post('/pets', async (req,res) => {
-    try{
-        const {name,age,kind} = req.body
+app.post('/pets', async (req, res) => {
+    console.log(req.body)
+    try {
+        console.log('Request Body:', req.body)
+        const { name, age, kind } = req.body
 
-        if(!name||!age||!kind){
+        if (!name || !age || !kind) {
             return res.status(400).send('Bad request')
         }
-        const newPet = {name,age,kind}
+        const newPet = { name, age, kind }
         const pets = await getPetsObj()
         pets.push(newPet)
         await fs.writeFile(petPath, JSON.stringify(pets))
         res.status(201).send('Pet created successfully')
     } catch (error) {
+        console.error(error)
         res.status(500).send('Internal Server Error')
     }
 })
 
 app.patch('/pets/:id', async (req,res) => {
     try{
-
+        const id = req.params.id;
+        const {age,kind,name} = req.body
+        const pets = await getPetsObj()
+        const pet = pets.find(pet => pet.id == id)
+        if (!pet) {
+            res.status(404).send('Pet not found')
+        }
+        if(name) pet.name = name
+        if(age) pet.age = age
+        if(kind) pet.kind = kind
+        await savePetsObj(pets)
+        res.send(pet)
     }catch (error){
+        console.log(error)
         res.status(500).send('Internal Server Error')
     }
 })

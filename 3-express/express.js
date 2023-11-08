@@ -31,34 +31,31 @@ app.get('/pets', async (req,res) => {
     }
 })
 
-app.get('/pets/:id', async (req,res) => {
-    try{
-        const pets = await getPetsObj()
-        aName = req.params.id
-        const index = parseInt(aName, 10)
-        console.log(index)
-        const result = pets.filter(obj => Object.values(obj).includes(aName, 10))
-        console.log(result)
-        if (isNaN(index)){
-            if (req.params.id === result){
-                return res.status(200).json(result)
-            }else{
-                console.log('err')
-                return res.status(400).send('Bad Request: Invalid pet index')
+app.get('/pets/:id', async (req, res) => {
+    try {
+        const pets = await getPetsObj();
+        const id = req.params.id;
+        const index = parseInt(id, 10);
+
+        if (isNaN(index)) {
+            const result = pets.find(pet => pet.name === id);
+            if (result) {
+                res.status(200).json(result);
+            } else {
+                res.status(404).send('Not Found');
+            }
+        } else {
+            if (index >= pets.length || index < 0) {
+                res.status(404).send('Not Found');
+            } else {
+                res.status(200).json(pets[index]);
             }
         }
-
-        if(index >= pets.length || index < 0){
-            res.status(404).send('Not Found')
-        }else{
-            res.status(200).json(pets[index])
-        }
-    }catch(error){
-        console.log(error)
-        console.log('end')
-        res.status(500).send('Internal Server Error')
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
     }
-})
+});
 
 app.post('/pets', async (req,res) => {
     try{
