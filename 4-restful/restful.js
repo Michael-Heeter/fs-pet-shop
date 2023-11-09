@@ -28,7 +28,7 @@ app.use(express.json())
 
 // app.use((err,req,res,next) => {
 //     if(err){
-//         res.status(500).send('Internal Server Error')
+//         res.sta tus(500).send('Internal Server Error')
 //     }else{
 //         next()
 //     }
@@ -36,39 +36,40 @@ app.use(express.json())
 
 app.get('/pets', async (req,res) => {
     try{
-        const pets = await pool.query('SELECT * FROM pets');
-        res.status(200).json(pets)
+        const {rows} = await pool.query('SELECT * FROM pets');
+        res.status(200).json(rows)
     } catch (error){
         console.log(error)
         res.status(500).send('Internal Server Error')
     }
 })
 
-// app.get('/pets/:id', async (req, res) => {
-//     try {
-//         const id = req.params.id;
-//         const pets = await pool.query('SELECT * FROM pets WHERE id = $1',[id]);
-//         const index = parseInt(id, 10);
+app.get('/pets/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        console.log(id)
+        const index = parseInt(id, 10);
+        const {rows} = await pool.query('SELECT * FROM pets');
 
-//         if (isNaN(index)) {
-//             const result = pets.find(pet => pet.name === id);
-//             if (result) {
-//                 res.status(200).json(result);
-//             } else {
-//                 res.status(404).send('Not Found');
-//             }
-//         } else {
-//             if (index >= pets.length || index < 0) {
-//                 res.status(404).send('Not Found');
-//             } else {
-//                 res.status(200).json(pets[index]);
-//             }
-//         }
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).send('Internal Server Error');
-//     }
-// });
+        if (isNaN(index)) {
+            const result = rows.find(pet => pet.name === id);
+            if (result) {
+                res.status(200).json(result);
+            } else {
+                res.status(404).send('Not Found');
+            }
+        } else {
+            if (index >= rows.length || index < 0) {
+                res.status(404).send('Not Found');
+            } else {
+                res.status(200).json(rows[index]);
+            }
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+});
 
 // app.post('/pets', async (req, res) => {
 //     console.log(req.body)
