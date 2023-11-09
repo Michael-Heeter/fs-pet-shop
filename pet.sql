@@ -1,0 +1,12 @@
+DROP DATABASE IF EXISTS petshop;
+
+CREATE DATABASE petshop;
+
+\c petshop
+
+CREATE TABLE IF NOT EXISTS pets
+(
+    name VARCHAR NOT NULL,
+    age INTEGER NOT NULL,
+    kind VARCHAR NOT NULL
+);

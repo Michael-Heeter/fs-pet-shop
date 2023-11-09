@@ -6,17 +6,20 @@ import {promises as fs} from 'fs'
 const petPath = './pets.json'
 const app = express()
 
-const PORT = 4000
+const PORT = 4200
 
 
 const getPetsObj = async () => {
     const petData = await fs.readFile(petPath, 'utf8')
+    // console.log(petData)
     return JSON.parse(petData)
 }
 
+app.use(express.json())
+
 app.use((err,req,res,next) => {
     if(err){
-        res.status(500).send('Internal Server Error')
+        res.status(500).send('Internal Server Error1')
     }else{
         next()
     }
@@ -58,9 +61,11 @@ app.get('/pets/:id', async (req, res) => {
 });
 
 app.post('/pets', async (req,res) => {
+    console.log(req.body)
     try{
+        // console.log(req)
         const {name,age,kind} = req.body
-
+        
         if(!name||!age||!kind){
             return res.status(400).send('Bad request')
         }
@@ -70,6 +75,7 @@ app.post('/pets', async (req,res) => {
         await fs.writeFile(petPath, JSON.stringify(pets))
         res.status(201).send('Pet created successfully')
     } catch (error) {
+        console.log(error)
         res.status(500).send('Internal Server Error')
     }
 })
