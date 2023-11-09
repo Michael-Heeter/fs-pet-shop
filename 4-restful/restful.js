@@ -4,20 +4,22 @@ import express from 'express'
 import {promises as fs} from 'fs'
 import pg from 'pg'
 const {Pool} = pg;
+const app = express()
 
+const PORT = 3000
+app.use(express.json())
 const pool = new Pool ({
     user: "postgres",
-    host: "localhost",
+    host: "",
     database: "petshop",
     password: "AllThePi",
     port: "5432"
 })
 
-// const petPath = './pets.json'
-const app = express()
+app.use(express.static('./public'))
 
-const PORT = 3000
-app.use(express.json())
+// const petPath = './pets.json'
+
 
 // const getPetsObj = async () => {
 //     const petData = await fs.readFile(petPath, 'utf8')
@@ -34,7 +36,7 @@ app.use(express.json())
 //     }
 // })
 
-app.get('/pets', async (req,res) => {
+app.get('/api/pets', async (req,res) => {
     try{
         const {rows} = await pool.query('SELECT * FROM pets');
         res.status(200).json(rows)
@@ -44,52 +46,45 @@ app.get('/pets', async (req,res) => {
     }
 })
 
-app.get('/pets/:id', async (req, res) => {
+app.get('/api/pets/:id', async (req, res) => {
     try {
         const id = req.params.id;
-        console.log(id)
         const index = parseInt(id, 10);
-        const {rows} = await pool.query('SELECT * FROM pets');
+        const result = await pool.query('SELECT * FROM pets WHERE id = $1', [id]);
 
-        if (isNaN(index)) {
-            const result = rows.find(pet => pet.name === id);
-            if (result) {
-                res.status(200).json(result);
-            } else {
-                res.status(404).send('Not Found');
-            }
+        if (result.rows.length === 0) {
+            res.status(404).send('Not Found');
         } else {
-            if (index >= rows.length || index < 0) {
-                res.status(404).send('Not Found');
-            } else {
-                res.status(200).json(rows[index]);
-            }
+            res.status(200).json(result.rows[0]);
         }
+        
     } catch (error) {
         console.error(error);
         res.status(500).send('Internal Server Error');
     }
 });
 
-// app.post('/pets', async (req, res) => {
-//     console.log(req.body)
-//     try {
-//         console.log('Request Body:', req.body)
-//         const { name, age, kind } = req.body
+app.post('/api/pets', async (req, res) => {
+    console.log(req.body)
+    
+    try {
+        console.log('Request Body:', req.body)
+        const { name, age, kind } = req.body
 
-//         if (!name || !age || !kind) {
-//             return res.status(400).send('Bad request')
-//         }
-//         const newPet = { name, age, kind }
-//         const pets = await getPetsObj()
-//         pets.push(newPet)
-//         await fs.writeFile(petPath, JSON.stringify(pets))
-//         res.status(201).send('Pet created successfully')
-//     } catch (error) {
-//         console.error(error)
-//         res.status(500).send('Internal Server Error')
-//     }
-// })
+        if (!name || !age || !kind) {
+            return res.status(400).send('Bad request')
+        }
+
+        const newPet = { name, age, kind }
+        const pets = await getPetsObj()
+        pets.push(newPet)
+        await fs.writeFile(petPath, JSON.stringify(pets))
+        res.status(201).send('Pet created successfully')
+    } catch (error) {
+        console.error(error)
+        res.status(500).send('Internal Server Error')
+    }
+})
 
 // app.patch('/pets/:id', async (req,res) => {
 //     try{

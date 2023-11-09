@@ -1,11 +1,7 @@
-DROP DATABASE IF EXISTS petshop;
-
-CREATE DATABASE petshop;
-
-\c petshop
 
 CREATE TABLE IF NOT EXISTS pets
 (
+    id SERIAL PRIMARY KEY,
     name VARCHAR NOT NULL,
     age INTEGER NOT NULL,
     kind VARCHAR NOT NULL
