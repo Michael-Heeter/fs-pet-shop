@@ -7,7 +7,7 @@ const {Pool} = pg;
 const app = express()
 
 const PORT = 3000
-app.use(express.json())
+
 const pool = new Pool ({
     user: "postgres",
     host: "",
@@ -15,7 +15,7 @@ const pool = new Pool ({
     password: "AllThePi",
     port: "5432"
 })
-
+app.use(express.json())
 app.use(express.static('./public'))
 
 // const petPath = './pets.json'
@@ -64,22 +64,17 @@ app.get('/api/pets/:id', async (req, res) => {
     }
 });
 
-app.post('/api/pets', async (req, res) => {
-    console.log(req.body)
-    
-    try {
-        console.log('Request Body:', req.body)
+app.post('/api/pets', async (req, res) => {    
+    try {console.log('Request Body:', req.body)
         const { name, age, kind } = req.body
-
         if (!name || !age || !kind) {
             return res.status(400).send('Bad request')
         }
 
         const newPet = { name, age, kind }
-        const pets = await getPetsObj()
-        pets.push(newPet)
-        await fs.writeFile(petPath, JSON.stringify(pets))
-        res.status(201).send('Pet created successfully')
+        const pets = await pool.query(`INSERT INTO pets(name, age, kind) VALUES($1, $2, $3) RETURNING id`, [name, age, kind])
+        newPet.id = pets.rows[0].id
+        res.status(201).json(newPet)
     } catch (error) {
         console.error(error)
         res.status(500).send('Internal Server Error')
